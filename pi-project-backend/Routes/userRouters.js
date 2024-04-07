@@ -1,10 +1,9 @@
 const express = require("express");
+const userRouter = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const User = require("../modals/userModal");
-const studentResponses = require("../modals/studentFormModal");
-
-const userRouter = express.Router();
+const { isLoggedIn } = require("../middleware/middleware");
 
 userRouter.post("/sign-up", async (req, res) => {
   try {
@@ -37,9 +36,9 @@ userRouter.post("/sign-in", async (req, res) => {
       if (isPasswordCorrect) {
         const token = jwt.sign({ user }, process.env.JWT_SECRET);
         res
-          .status(200)
           .cookie(process.env.JWT_SECRET_KEY, token)
-          .json({ userData, msg: "user sucessfully logged In." });
+          .status(200)
+          .json({ userData, msg: "user sucessfully logged In.", token });
       } else {
         res.status(401).json({ msg: "Incorrect password" });
       }
@@ -51,43 +50,17 @@ userRouter.post("/sign-in", async (req, res) => {
   }
 });
 
-userRouter.post("/form", async (req, res) => {
+userRouter.get("/logout", isLoggedIn, (req, res) => {
   try {
-    const { userId, name, email, number, file } = req.body;
-    // console.log(req.body);
-    // console.log({ userId : typeof userId, name : typeof name, email: typeof email, number: typeof number, file: typeof file });
-    const formRes = await studentResponses.create({
-      userId,
-      email,
-      name,
-      number,
-      file,
-    });
-    res.status(200).json({ formRes });
-  } catch (err) {
-    res.status(400).json({ err });
+    res
+      .status(200)
+      .clearCookie(process.env.JWT_SECRET_KEY)
+      .json({ msg: "logout successfully" });
+  } catch (error) {
+    console.log({ error });
+    res.status(400).json({ error });
   }
 });
-
-userRouter.post("/get-user-responses", async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const formRes = await studentResponses.find({ userId });
-    res.status(200).json({ formRes });
-  } catch (err) {
-    res.status(400).json({ err });
-  }
-});
-
-userRouter.get("/get-all-responses", async (req, res) => {
-  try {
-    const formRes = await studentResponses.find();
-    res.status(200).json({ formRes });
-  } catch (err) {
-    res.status(400).json({ err });
-  }
-});
-
 
 module.exports = {
   userRouter,

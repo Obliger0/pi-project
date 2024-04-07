@@ -28,7 +28,6 @@ export function Admin() {
 }
 
 function Card({data}) {
-    console.log({data});
     return (
       <div className="card">
         <div>{data?.email}</div>

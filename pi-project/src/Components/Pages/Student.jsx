@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { getResponsesById, submitFormApi } from "../../Apis/api";
+import { getResponsesById, logOut, submitFormApi, uploadImageApi } from "../../Apis/api";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function Student() {
   const { _id: userId } = useSelector((state) => state.user.userData);
@@ -33,45 +34,79 @@ export function Student() {
 }
 
 function FormComponent({ userId }) {
-  const [number, setNumber] = useState("");
   async function handleOnSubmit(e) {
     e.preventDefault();
     let name = e.target.name.value;
     let email = e.target.email.value;
     let phone = "" + e.target.phone.value;
     // const file = e.target.name.value;
-    // console.log({userId,name,email,phone});
-    // console.log(typeof phone);
     const res = await submitFormApi(userId, name, email, phone, "123");
     console.log({ res });
   }
+  const onSave = async (file) => {
+    try {
+      await uploadImage(file.data);
+      alert("Image uploaded successfully");
+    } catch (err) {
+      console.log(err);
+      alert("Unable to upload image");
+    }
+  };
+  const uploadImage = async (image) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(image);
+      reader.onloadend = async () => {
+        try {
+          const data = await uploadImageApi(
+            reader.result,
+            image.name,
+            image.size
+          );
+          resolve(data);
+        } catch (err) {
+          reject(err);
+        }
+      };
+    });
+  };
+
+  function setFiles(files) {
+    const fileList = Object.values(files).map((file) => {
+      console.log();
+      return {
+        url: URL.createObjectURL(file),
+        data: file,
+      };
+    });
+    // dispatch(setImage(...fileList));
+  }
+  
+  const navigate = useNavigate();
 
   return (
     <div className="container">
       <form onSubmit={handleOnSubmit}>
         <input type="text" placeholder="Full Name" name="name" />
         <input type="email" placeholder="Email Address" name="email" />
-        <input
-          type="text"
-          placeholder="Phone Number"
-          name="phone"
-          // value={number}
-          onChange={(e) => {
-            // let num = Number(e.target.value);
-            // console.log(num);
-            // if(typeof num === number) setNumber(e.target.value);
-          }}
-        />
+        <input type="text" placeholder="Phone Number" name="phone" />
         <label for="image-file">Admin</label>
         <input type="file" id="image-file" name="file" />
         <button className="submit-btn">Submit</button>
       </form>
+      <button
+        onClick={ async () => {
+          const res = await logOut();
+          if(res===200) navigate("/")
+        }}
+      >
+        LogOut
+      </button>
     </div>
   );
 }
 
-function Responses({userId}) {
-
+function Responses({ userId }) {
   const [allRes, setAllRes] = useState([]);
   console.log({ allRes });
 
@@ -82,10 +117,11 @@ function Responses({userId}) {
   }
   useEffect(() => {
     getAllData();
+    // eslint-disable-next-line
   }, []);
   return (
     <>
-      <h1>Admin DashBoard</h1>
+      <h1>Student DashBoard</h1>
       <div className="card-container">
         {allRes.map((data) => {
           return (

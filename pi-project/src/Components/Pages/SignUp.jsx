@@ -17,11 +17,7 @@ export function SignUp() {
     else if (student) userType = "student";
     const res = await signUpApi(name, email, pass, userType);
     if (res.status === 201) alert("User Already Exist");
-    else if (res.status === 200) {
-        const data = await res.json();
-        console.log({ data });
-        navigate("/")
-    }
+    else if (res.status === 200) navigate("/");
   }
 
   return (
@@ -46,6 +42,7 @@ export function SignUp() {
           navigate("/");
         }}
       >
+        
         Sign In
       </div>
     </div>
